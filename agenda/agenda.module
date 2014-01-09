@@ -57,6 +57,13 @@ function agenda_menu() {
     'access arguments' => array('configure agenda blocks'),
     'file'             => 'agenda.admin.php',
   );
+  
+  $items['admin/config/services/agenda/%/refresh'] = array(
+    'type'             => MENU_CALLBACK,
+    'page callback'    => 'agenda_refresh',
+    'page arguments'   => array(4),
+    
+  );  
 
   return $items;
 }
@@ -127,7 +134,7 @@ function agenda_block_view($delta) {
 function agenda_theme($existing, $type, $theme, $path) {
   $theme = array(
     'agenda_block' => array(
-      'variables' => array('events' => array(), 'block' => new stdClass),
+      'variables' => array('events' => array(), 'block' => new stdClass, 'id' => 0),
       'template'  => 'agenda-block',
     ),
     'agenda_admin' => array(
@@ -156,7 +163,7 @@ function agenda_display_block($delta = 0) {
   $events = agenda_group_events_for_block($block, $events);
   // Render.
   if (count($events)) {
-    $output = theme('agenda_block', array('events' => $events, 'block' => $block));
+    $output = theme('agenda_block', array('events' => $events, 'block' => $block, 'id' => $delta ));
   }
   elseif (empty($block->noeventstext)) {
     $output = NULL;
@@ -234,7 +241,7 @@ function agenda_variable_set($bid, $name, $value) {
  * @param bool $cacheaction Whether to interact with the cache
  * @access private
  */
-function agenda_get_events($block, $cache = TRUE) {
+function agenda_get_events($block, $cache = TRUE, $forceRefresh = false) {
 
   // Check the cache
   if ($cache) {
@@ -291,6 +298,20 @@ function agenda_get_events($block, $cache = TRUE) {
   }
 
   return $eventdata;
+}
+
+//force refresh
+function agenda_refresh($id) 
+{
+  // Check block exists
+  if ($id === 0 || !($block = agenda_settings($id))) {
+    return false;
+  }
+  
+  //Force calendar refresh.
+  agenda_get_events($block,false);	
+  
+  return ('<B>Success</b>');
 }
 
 
@@ -484,4 +505,39 @@ function agenda_group_events_for_block($block, array $events) {
     $count++;
   }
   return $events;
+}
+/**
+ * Takes a string and returns any http etc url tagged in an A tag.
+ *
+ * @author Toby Allen
+ * @param string $text Text to be converted
+ * @return string  Text with added links
+ * @access private
+ 
+ */
+function _agenda_convert_links($text)
+{
+
+if (preg_match('/\\[(.*?)\\]\\[(.*?)\\]/', $text)) {
+	return preg_replace('/\\[(.*?)\\]\\[(.*?)\\]/', '<a href="$1" >$2</a>', $text);
+} else {
+	
+}
+
+// The Regular Expression filter
+$reg_exUrl = "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
+
+
+// Check if there is a url in the text
+if(preg_match($reg_exUrl, $text, $url)) {
+
+       // make the urls hyper links
+       return preg_replace($reg_exUrl, "<a href=\"{$url[0]}\">{$url[0]}</a> ", $text);
+
+} else {
+
+       // if no urls in the text just return the text
+       return $text;
+
+}
 }
