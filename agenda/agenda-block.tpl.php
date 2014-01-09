@@ -47,4 +47,5 @@ $nolabel = array_map('trim', explode(',', $block->hide_labels));
   <?php endforeach; ?>
   </ol>
 <?php endforeach; ?>
+<div ><a href="/admin/config/services/agenda/<?php echo $id; ?>/refresh">Refresh</A>... </div>
 </div>
